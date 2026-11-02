@@ -1,0 +1,4 @@
+- id: editor
+  plugin: ../..
+- id: commonmark
+  plugin: ../../../docleus-plugin-blocks-commonmark

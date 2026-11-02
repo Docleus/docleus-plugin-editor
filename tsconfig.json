@@ -1,0 +1,15 @@
+{
+  "extends": "@docleus/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node"]
+  },
+  "include": ["src", "tests", "vite.config.ts", "playwright.config.ts"],
+  "references": [
+    {
+      "path": "../docleus-core/packages/kernel/vendor/cordis"
+    }
+  ]
+}
