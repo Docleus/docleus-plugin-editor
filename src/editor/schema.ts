@@ -34,6 +34,7 @@ import {
   UndoRedo,
 } from "@tiptap/extensions";
 import type * as Y from "yjs";
+import { collaborationSelectionPlugin } from "./collaboration-selection.ts";
 import { createEditorHandle } from "./handle.ts";
 import { blockIdPlugin } from "./ids.ts";
 import {
@@ -348,7 +349,14 @@ export function buildExtensions(
             document: options.collaboration.document,
             field: options.collaboration.field,
           }),
-          CollaborationCaret.configure({
+          CollaborationCaret.extend({
+            addProseMirrorPlugins() {
+              return [
+                ...(this.parent?.() ?? []),
+                collaborationSelectionPlugin(),
+              ];
+            },
+          }).configure({
             provider: options.collaboration.provider,
             user: options.collaboration.user,
           }),

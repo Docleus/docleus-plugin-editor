@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" /></a>
-  <img alt="Public preview in preparation" src="https://img.shields.io/badge/preview-0.0.1-cfcfcf?style=flat-square" />
+  <img alt="Public preview in preparation" src="https://img.shields.io/badge/preview-0.0.2-cfcfcf?style=flat-square" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square" />
   <a href="https://docleus.io"><img alt="Online documentation" src="https://img.shields.io/badge/docs-docleus.io-111111?style=flat-square" /></a>
 </p>
@@ -51,6 +51,8 @@ Blocks and inline nodes whose type has no registration show as read-only placeho
 When a page opens, and again when its branch or the set of providers changes, the editor asks the registered collaboration providers in order with the page (`orgId`, `spaceId`, `branch`, `entryId`) and a plain-data description of its schema. The first session returned wins. Until it has synced, an editor already on screen stays read-only; a page opened fresh shows "Connecting…".
 
 With a session, the editor binds Tiptap's `Collaboration` extension to the session's `Y.Doc` fragment instead of loading the stored body, shows the other users' carets with `CollaborationCaret`, and leaves undo history to Yjs (no `UndoRedo`). Remote changes do not mark the page dirty, and Save calls `session.save()` instead of saving the body. Without a provider, or when one fails (logged as a warning), the page is edited alone as before.
+
+Remote caret updates preserve a local text selection that the browser has moved but has not yet reported through `selectionchange`, so simultaneous cursor movement does not redirect typing to an old position.
 
 The session's document must be a `Y.Doc` from the `yjs` module this plugin exposes, so the provider and the editor share one Yjs.
 
