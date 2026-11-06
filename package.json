@@ -1,6 +1,6 @@
 {
   "name": "@docleus/plugin-editor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "The Docleus block editor: Tiptap shell, toolbar, slash menu, block settings, and the editor API for block plugins.",
