@@ -30,7 +30,7 @@
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm deps && pnpm license && pnpm test"
   },
   "peerDependencies": {
-    "@docleus/sdk": "^0.0.1",
+    "@docleus/sdk": ">=0.0.1 <0.0.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
