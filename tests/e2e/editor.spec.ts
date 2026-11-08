@@ -256,7 +256,12 @@ test("the selection toolbar formats text and the block menu turns blocks", async
   const body = editorBody(page);
   await body.click();
   await page.keyboard.type("Make this bold");
-  await page.keyboard.press("Shift+Home");
+  await body
+    .getByText("Make this bold", { exact: true })
+    .click({ clickCount: 3 });
+  await expect
+    .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+    .toBe("Make this bold");
   const toolbar = page.getByRole("toolbar", { name: "Formatting" });
   await toolbar.getByRole("button", { name: "Bold" }).click();
   await expect(body.locator("strong")).toHaveText("Make this bold");
