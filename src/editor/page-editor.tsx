@@ -122,6 +122,10 @@ function EditorBody({
     ) as JSONContent;
     // The body prop only seeds the first editor; later ones keep the edits.
   }, [extensions]);
+  const saving = useRef<Promise<void> | undefined>(undefined);
+  const isPending = useRef(false);
+  const isUnmounted = useRef(false);
+  const latestDocument = useRef<JSONContent | undefined>(undefined);
   const [save, setSaveLocal] = useState<SaveState>({ kind: "saved" });
   const { onSaveState } = page;
   // Nothing is reported until the first change, so the host shows no save
@@ -129,6 +133,7 @@ function EditorBody({
   const hasChanged = useRef(false);
   const setSave = useCallback(
     (state: SaveState) => {
+      if (isUnmounted.current) return;
       setSaveLocal(state);
       isDirty.current = state.kind === "dirty";
       if (state.kind !== "saved" || hasChanged.current) onSaveState?.(state);
@@ -175,9 +180,11 @@ function EditorBody({
             .setMeta("addToHistory", false),
         );
       },
-      onUpdate: ({ transaction }) => {
+      onUpdate: ({ editor: changed, transaction }) => {
         if (transaction.docChanged && !isRemote(transaction)) {
           hasChanged.current = true;
+          latestDocument.current = changed.getJSON();
+          isPending.current = true;
           setSave({ kind: "dirty" });
           clearTimeout(timer.current);
           timer.current = setTimeout(() => flushRef.current(), AUTOSAVE_MS);
@@ -196,48 +203,42 @@ function EditorBody({
   );
 
   const { save: saveDocument } = page;
-  const saving = useRef<Promise<void> | undefined>(undefined);
-  const isPending = useRef(false);
   const runSave = useCallback(async () => {
     clearTimeout(timer.current);
-    // One save at a time; a change made during a save is saved after it.
-    if (saving.current) {
-      isPending.current = true;
-      return saving.current;
-    }
-    setSave({ kind: "saving" });
+    if (saving.current) return saving.current;
     const run = (async () => {
-      try {
-        await (shared ? shared.session.save() : saveDocument(editor.getJSON()));
-        setSave(isPending.current ? { kind: "dirty" } : { kind: "saved" });
-      } catch (error) {
-        setSave({ kind: "error", message: messageOf(error) });
-      }
+      do {
+        isPending.current = false;
+        setSave({ kind: "saving" });
+        try {
+          await (shared
+            ? shared.session.save()
+            : saveDocument(latestDocument.current ?? editor.getJSON()));
+          setSave(isPending.current ? { kind: "dirty" } : { kind: "saved" });
+        } catch (error) {
+          isPending.current = true;
+          setSave({ kind: "error", message: messageOf(error) });
+          if (isUnmounted.current) onError(error);
+          return;
+        }
+      } while (isPending.current);
     })();
     saving.current = run;
     await run;
     saving.current = undefined;
-    if (isPending.current) {
-      isPending.current = false;
-      await runSave();
-    }
-  }, [editor, saveDocument, shared, setSave]);
+  }, [editor, saveDocument, shared, setSave, onError]);
   flushRef.current = () => {
     if (isDirty.current && !isReadOnly) void runSave();
   };
-  // Leaving the page saves what is left.
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    isUnmounted.current = false;
+    return () => {
+      isUnmounted.current = true;
       clearTimeout(timer.current);
-      if (!isDirty.current) return;
-      const pending = shared
-        ? shared.session.save()
-        : saveDocument(editor.getJSON());
-      // Nothing is left on screen to show a failure in.
-      pending.catch(onError);
-    },
-    [editor, saveDocument, shared, onError],
-  );
+      // The queue owns document snapshots, so it can finish after destruction.
+      if (isPending.current) void runSave();
+    };
+  }, [runSave]);
 
   const settings = useMemo(() => {
     const panels = new Map<string, UiComponent<BlockSettingsProps>>();

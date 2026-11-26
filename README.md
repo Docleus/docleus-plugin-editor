@@ -104,3 +104,5 @@ before 1.0.
 
 Version `0.0.9` supports Docleus core and SDK `0.0.1`, `0.0.2`, `0.0.3`, `0.0.4`, `0.0.5`, `0.0.6`, `0.0.7`, `0.0.8` and `0.0.9` through
 the matching `>=0.0.1 <0.0.10` manifest and SDK peer ranges.
+
+Autosave serializes page writes and drains edits made during an in-flight save, including when leaving the editor. The saved indicator appears only after the latest write completes; failures after leaving are reported to the host.
